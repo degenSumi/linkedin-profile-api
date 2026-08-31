@@ -6,5 +6,5 @@ import app from './index.js';
 const port = Number(process.env['PORT'] ?? 3000);
 
 serve({ fetch: app.fetch, port }, (info) => {
-  console.log(`listening on http://localhost:${info.port} — docs at /docs`);
+  console.log(`listening on http://localhost:${info.port}, docs at /docs`);
 });

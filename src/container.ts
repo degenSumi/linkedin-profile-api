@@ -48,7 +48,7 @@ export function buildContainer(
   // replaced now returns 410 Gone. GraphQL reads the same normalized documents but
   // needs a captured query id, so it sits behind. The public page needs no session
   // at all, which is why it is last rather than absent.
-  // GraphQL is only wired in when its query id is configured — an unconfigured source
+  // GraphQL is only wired in when its query id is configured, since an unconfigured source
   // would fail on every request and make /health advertise something that cannot answer.
   const sources = [
     new VoyagerDashSource(http, sessions),
@@ -65,7 +65,7 @@ export function buildContainer(
   );
 
   if (config.DISABLE_AUTH) {
-    console.warn('auth_disabled', { detail: 'DISABLE_AUTH is set — /v1 routes are unauthenticated' });
+    console.warn('auth_disabled', { detail: 'DISABLE_AUTH is set, so /v1 routes are unauthenticated' });
   }
 
   return {

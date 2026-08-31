@@ -56,7 +56,7 @@ export class LinkedInSessions {
     // operator refreshes LI_AT instead.
     if (this.loginChallenge) {
       throw new SessionUnavailableError(
-        `LinkedIn ${this.loginChallenge} and the login will not be retried — refresh LI_AT`,
+        `LinkedIn ${this.loginChallenge} and the login will not be retried, so refresh LI_AT`,
       );
     }
     if (email && password) {

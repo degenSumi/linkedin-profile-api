@@ -22,12 +22,12 @@ export class FallbackChain implements ProfileSource {
         const result = await source.fetch(ref, options);
         return failures.length > 0 ? { ...result, degradedFrom: [...failures] } : result;
       } catch (error) {
-        // A missing profile is an answer, not a source failure — later sources cannot do better.
+        // A missing profile is an answer, not a source failure: later sources cannot do better.
         if (error instanceof ProfileNotFoundError) {
           throw error;
         }
         const failure = { source: source.name, reason: reasonOf(error) };
-        // Surfaced even when a later source succeeds — otherwise a silently degraded
+        // Surfaced even when a later source succeeds, because otherwise a silently degraded
         // response looks identical to a healthy one in the logs.
         console.warn('profile_source_failed', failure);
         failures.push(failure);

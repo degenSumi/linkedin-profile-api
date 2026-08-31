@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "pnpm build && node --env-file-if-exists=.env.local dist/server.js",
-    "deploy": "vercel dev",
+    "dev:vercel": "vercel dev",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",

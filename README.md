@@ -84,7 +84,7 @@ logs:
   "source": "public-html",
   "partial": true,
   "degradedFrom": [
-    { "source": "voyager-dash", "reason": "LinkedIn redirected the request to sign-in — the session has expired" },
+    { "source": "voyager-dash", "reason": "LinkedIn redirected the request to sign-in, so the session has expired" },
     { "source": "voyager-graphql", "reason": "Voyager GraphQL returned an empty profile" },
   ],
 }
@@ -97,6 +97,7 @@ logs:
 | `GET /health`       | no   | Liveness plus whether a LinkedIn session is set up |
 | `GET /openapi.json` | no   | OpenAPI 3.1 document generated from the schemas    |
 | `GET /docs`         | no   | Scalar API reference                               |
+| `GET /`             | no   | Redirects to `/docs`                               |
 
 ### Errors
 
@@ -110,6 +111,7 @@ carries an `x-request-id` header.
 | 404    | `profile_not_found`                       | LinkedIn has no such profile                   |
 | 429    | `rate_limit_exceeded`                     | Per-caller limit hit; see `retry-after`        |
 | 502    | `all_sources_failed` / `upstream_blocked` | LinkedIn refused every source                  |
+| 502    | `upstream_unavailable`                    | LinkedIn answered, but not with a usable body  |
 | 503    | `session_unavailable` / `not_configured`  | Deployment has no usable session or no API key |
 
 ## Approach
@@ -127,18 +129,18 @@ make it work:
   `Accept: application/vnd.linkedin.normalized+json+2.1` returns a flat `{ data, included[] }`
   document where every entity is tagged with `$type`. Entities reference each other by URN through
   `*`-prefixed keys (`"*company"`, `"*geo"`), so mapping means indexing `included` by `entityUrn`
-  and following those references — that is what `sources/normalized.ts` does.
+  and following those references, which is what `sources/normalized.ts` does.
 
 Three sources sit behind one interface and are tried in order:
 
-1. **`voyager-dash`** — `/voyager/api/identity/dash/profiles?q=memberIdentity&memberIdentity={id}`
+1. **`voyager-dash`**: `/voyager/api/identity/dash/profiles?q=memberIdentity&memberIdentity={id}`
    with `decorationId=…FullProfileWithEntities-67`. The decoration controls how much of the graph
    LinkedIn inlines; with it, positions, education and their companies arrive in one call. This is
    the endpoint that currently answers.
-2. **`voyager-graphql`** — `/voyager/api/graphql`. Secondary, and off unless
+2. **`voyager-graphql`**: `/voyager/api/graphql`. Secondary, and off unless
    `VOYAGER_PROFILE_QUERY_ID` is set. It reads the same normalized documents through identical
    mapping code; no query id that returns a full profile is currently known.
-3. **`public-html`** — the logged-out profile page, read through its `application/ld+json` block.
+3. **`public-html`**: the logged-out profile page, read through its `application/ld+json` block.
    Works with no session at all and returns less, so responses are flagged `partial`.
 
 The legacy `/voyager/api/identity/profiles/{id}/profileView` endpoint that most write-ups still
@@ -173,13 +175,13 @@ src/
   infra/        fetch client, TTL store, rate limiter, env config
   api/          Hono routes, middleware, zod schemas that also generate the OpenAPI doc
   container.ts  the only place concrete classes are constructed
-  index.ts      the app itself — Vercel imports this
+  index.ts      the app itself, which Vercel imports
   server.ts     Node server for local runs, wrapping the same app
 ```
 
 Errors are a typed hierarchy off `AppError`; one middleware turns them into status codes, so no
 route does its own error formatting. Caching is split deliberately: `infra/store.ts` is _where_
-data lives, `profiles/cached.ts` is _when_ to use it — so moving to Redis is a new class in
+data lives, `profiles/cached.ts` is _when_ to use it, so moving to Redis is a new class in
 `infra/`, and changing the caching policy touches only the provider.
 
 ## Setup
@@ -191,7 +193,7 @@ pnpm dev                     # http://localhost:3000, docs at /docs
 ```
 
 `pnpm dev` compiles with `tsc` and runs a plain Node server (`src/server.ts`), reading
-`.env.local` — no Vercel account or CLI needed. `pnpm dev:vercel` runs the same app through
+`.env.local`, with no Vercel account or CLI needed. `pnpm dev:vercel` runs the same app through
 `vercel dev` if you want to exercise the deployed runtime instead.
 
 ```bash
@@ -239,35 +241,27 @@ vercel deploy --prod
 
 ## Known limitations
 
-- **Terms of service.** Automated access to LinkedIn violates its user agreement and can get an
-  account restricted. Use a throwaway account, not one that matters.
-- **Cookie expiry.** `li_at` is long-lived but not permanent, and LinkedIn invalidates it on
-  password change or a security challenge. Refreshing it is a manual step.
-- **Credential login is recovery, not a supported path.** It works — it is what recovered the
-  session after LinkedIn revoked the cookie mid-test — but LinkedIn challenges it aggressively, and
-  once it answers `303 → /checkpoint/challenge` every further attempt gets the same challenge until
-  a human clears it in a browser. `LinkedInSessions` therefore retires the login route after one
-  challenge rather than re-submitting credentials, since the resubmissions are themselves what keeps
-  the challenge alive. On serverless a cookie it obtains lives only in that warm instance; it cannot
-  write itself back to the environment. Prefer a browser-captured `LI_AT`, and do not set
-  `LINKEDIN_EMAIL`/`LINKEDIN_PASSWORD` in production, where every cold start would attempt a login.
+- **Terms of service.** Automated access breaks LinkedIn's user agreement and can get an account
+  restricted. Use a throwaway account, not one that matters.
+- **Sessions do not last.** LinkedIn revokes `li_at` under scripted volume. Every Voyager endpoint
+  then answers `302` with a `Location` equal to the request URL, and that response carries
+  `Set-Cookie: li_at=<9 chars>`, which is LinkedIn clearing the cookie. No cool-off brings it back;
+  the fix is to capture a fresh one.
+- **Credential login is recovery, not a supported path.** It works, and it is what recovered the
+  session after LinkedIn revoked the cookie mid-test, but LinkedIn challenges it. Once it answers
+  `303` to `/checkpoint/challenge`, every retry gets the same challenge until a human clears it in a
+  browser, so `LinkedInSessions` retires the login route after one challenge instead of
+  resubmitting. Do not set `LINKEDIN_EMAIL`/`LINKEDIN_PASSWORD` in production, where every cold
+  start would attempt a login.
 - **The GraphQL tier is off by default.** No query id that returns a full profile is currently
   known, so it ships unconfigured. `voyager-dash` is the primary source and does not depend on it.
-- **IP reputation.** LinkedIn challenges known datacenter ranges, and Vercel is one. Caching and
-  the fallback tier absorb some of that; `PROXY_URL` is the real mitigation.
-- **Partial fallback data.** The logged-out page has no skills, certifications or endorsement
+- **IP reputation.** LinkedIn challenges known datacenter ranges, and Vercel is one. Caching and the
+  fallback tier absorb some of that; `PROXY_URL` is the real mitigation.
+- **Partial fallback data.** The logged-out page carries no skills, certifications or endorsement
   counts, and LinkedIn masks the headline, so `partial: true` responses are genuinely thinner.
-- **LinkedIn revokes sessions under volume.** After a burst of requests every Voyager endpoint,
-  `/voyager/api/me` included, answers `302` with a `Location` identical to the request URL. The
-  response carries `Set-Cookie: li_at=<9 chars>`: LinkedIn is clearing the cookie, so the session is
-  dead rather than throttled and no cool-off brings it back. The chain recovers on the next request
-  by falling through to credential login, but the durable fix is a freshly captured `LI_AT`.
-- **Skills, certifications and languages are frequently absent.** They come back empty for profiles
-  that do not publish them — on the two tested, LinkedIn's own `/details/skills/` page redirects
-  away, which is the site saying the section does not exist. The mapper reads them wherever the
-  decoration inlines them; it cannot invent a section the profile does not have.
-- **Decoration ids rotate.** `FullProfileWithEntities-67` is versioned; when LinkedIn bumps it the
-  dash source needs the new value, in the same way the GraphQL source needs a fresh query id.
-- **Rate limiting is per-instance.** Serverless instances do not share memory, so the limit is
-  approximate under concurrency. A shared store behind the existing `RateLimiter` port would fix it.
+- **Decoration ids rotate.** `FullProfileWithEntities-67` is versioned, and the dash source needs the
+  new value once LinkedIn bumps it.
+- **Rate limiting is per-instance.** `FixedWindowRateLimiter` counts in memory and serverless
+  instances do not share it, so the limit is approximate under concurrency. Backing it with the
+  `Store` port instead would fix that.
 - **Personal profiles only.** Company and school URLs are rejected rather than half-supported.

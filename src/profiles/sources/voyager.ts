@@ -31,7 +31,7 @@ export function assertUsable(
     sessions.invalidate();
     throw new UpstreamBlockedError(
       redirectedToLogin
-        ? 'LinkedIn redirected the request to sign-in — the session has expired'
+        ? 'LinkedIn redirected the request to sign-in, so the session has expired'
         : `LinkedIn rejected the Voyager session (HTTP ${response.status})`,
     );
   }

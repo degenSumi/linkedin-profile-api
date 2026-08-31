@@ -37,7 +37,7 @@ export class PublicHtmlSource implements ProfileSource {
     const person = findPerson(response.body);
     if (!person) {
       throw new UpstreamBlockedError(
-        'Public profile page contained no profile data — LinkedIn served an auth wall',
+        'Public profile page contained no profile data, so LinkedIn served an auth wall',
       );
     }
 

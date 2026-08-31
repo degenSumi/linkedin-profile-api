@@ -17,7 +17,7 @@ import { integer, isNamed, list, partialDate, pick, record, text, vectorImage } 
 /**
  * Maps Voyager's normalized `{ data, included }` documents, used by both the dash REST
  * endpoint and GraphQL. Every entity is flattened into `included` and tagged with `$type`,
- * and entities reference each other by URN through `*`-prefixed keys — so mapping means
+ * and entities reference each other by URN through `*`-prefixed keys, so mapping means
  * indexing `included` by `entityUrn` and following those references.
  */
 
