@@ -210,7 +210,8 @@ pnpm check   # typecheck + lint + tests, all offline
 | Variable                               | Required | Purpose                                           |
 | -------------------------------------- | -------- | ------------------------------------------------- |
 | `API_KEY`                              | yes      | Key callers must present                          |
-| `LI_AT`                                | yes\*    | LinkedIn session cookie                           |
+| `LI_COOKIE`                            | yes\*    | Whole Cookie header from a signed-in browser      |
+| `LI_AT`                                | yes\*    | Session cookie on its own, if `LI_COOKIE` is unset |
 | `DISABLE_AUTH`                         | no       | Local only: skips the API key check               |
 | `DOCS_PREFILL_API_KEY`                 | no       | Puts the API key into `/docs` so it is callable   |
 | `LI_JSESSIONID`                        | no       | Captured CSRF cookie; generated when absent       |
@@ -224,11 +225,16 @@ pnpm check   # typecheck + lint + tests, all offline
 
 \* without either the cookie or credentials, only the `public-html` tier can answer.
 
-### Getting `LI_AT`
+### Getting `LI_COOKIE`
 
-Log in to LinkedIn in a browser, open DevTools → Application → Cookies → `https://www.linkedin.com`,
-and copy the value of `li_at`. Set it with `vercel env add LI_AT`. Use a throwaway account (see
-limitations).
+Prefer this over `LI_AT`. Log in to LinkedIn, open DevTools → Network, click any request to
+`www.linkedin.com`, and copy the whole `Cookie` request header. Set it with
+`vercel env add LI_COOKIE`. Use a throwaway account (see limitations).
+
+Sending the complete header matters. LinkedIn issues `li_at` next to `bcookie`, `lidc` and a real
+`JSESSIONID`, and a request carrying `li_at` alone is treated as a session worth dropping: it
+answers a couple of calls and is then revoked. `LI_AT` on its own still works and is the smaller
+thing to paste, but expect it to be short-lived.
 
 ### Getting `VOYAGER_PROFILE_QUERY_ID`
 
@@ -249,10 +255,13 @@ vercel deploy --prod
 
 - **Terms of service.** Automated access breaks LinkedIn's user agreement and can get an account
   restricted. Use a throwaway account, not one that matters.
-- **Sessions do not last.** LinkedIn revokes `li_at` under scripted volume. Every Voyager endpoint
-  then answers `302` with a `Location` equal to the request URL, and that response carries
-  `Set-Cookie: li_at=<9 chars>`, which is LinkedIn clearing the cookie. No cool-off brings it back;
-  the fix is to capture a fresh one.
+- **Sessions do not last, and nothing restores them.** LinkedIn revokes a session by answering every
+  Voyager endpoint with `302` to the request URL, carrying `Set-Cookie: li_at=<9 chars>`, which is
+  the cookie being cleared. Once that happens the deployment cannot recover on its own: minting a
+  session needs either a fresh cookie or a login, and the login route is the one LinkedIn
+  challenges. The API keeps serving from `public-html` with `partial: true` and says so in
+  `degradedFrom` until someone sets a new cookie. Sending `LI_COOKIE` rather than `LI_AT` is what
+  makes a session survive long enough to matter.
 - **Credential login is recovery, not a supported path.** It works, and it is what recovered the
   session after LinkedIn revoked the cookie mid-test, but LinkedIn challenges it. Once it answers
   `303` to `/checkpoint/challenge`, every retry gets the same challenge until a human clears it in a

@@ -38,6 +38,7 @@ export function buildContainer(
     );
 
   const sessions = new LinkedInSessions(http, {
+    cookieHeader: config.LI_COOKIE,
     liAt: config.LI_AT,
     jsessionId: config.LI_JSESSIONID,
     email: config.LINKEDIN_EMAIL,

@@ -69,3 +69,32 @@ describe('LinkedInSessions', () => {
     expect((await sessions.get()).cookie).toContain('li_at=recovered');
   });
 });
+
+describe('LinkedInSessions with a full cookie header', () => {
+  const header = 'bcookie="v=2&abc"; li_at=token; JSESSIONID="ajax:5551234"; lidc="b=OB1"';
+
+  it('sends the header untouched and reads the csrf token out of it', async () => {
+    const http = new StubHttp({});
+
+    const session = await new LinkedInSessions(http, { cookieHeader: header }).get();
+
+    expect(session.cookie).toBe(header);
+    expect(session.csrfToken).toBe('ajax:5551234');
+  });
+
+  it('is preferred over a bare li_at', async () => {
+    const http = new StubHttp({});
+
+    const session = await new LinkedInSessions(http, { cookieHeader: header, liAt: 'bare' }).get();
+
+    expect(session.cookie).toBe(header);
+  });
+
+  it('rejects a header with no JSESSIONID to send', async () => {
+    const http = new StubHttp({});
+
+    await expect(
+      new LinkedInSessions(http, { cookieHeader: 'li_at=token' }).get(),
+    ).rejects.toThrow('no JSESSIONID');
+  });
+});

@@ -11,6 +11,7 @@ const LOGIN_PAGE = 'https://www.linkedin.com/checkpoint/rm/sign-in-another-accou
 const LOGIN_SUBMIT = 'https://www.linkedin.com/checkpoint/lg/login-submit';
 
 export interface LinkedInCredentials {
+  readonly cookieHeader?: string | undefined;
   readonly liAt?: string | undefined;
   readonly jsessionId?: string | undefined;
   readonly email?: string | undefined;
@@ -46,8 +47,11 @@ export class LinkedInSessions {
   }
 
   private resolve(): Promise<LinkedInSession> {
-    const { liAt, jsessionId, email, password } = this.credentials;
+    const { cookieHeader, liAt, jsessionId, email, password } = this.credentials;
 
+    if (cookieHeader && !this.cookieRejected) {
+      return Promise.resolve(fromCookieHeader(cookieHeader));
+    }
     if (liAt && !this.cookieRejected) {
       return Promise.resolve(fromCookie(liAt, jsessionId));
     }
@@ -113,6 +117,17 @@ export class LinkedInSessions {
       csrfToken: csrfTokenFrom(jsessionId),
     };
   }
+}
+
+// The browser's own Cookie header, used as sent. LinkedIn issues li_at alongside bcookie,
+// lidc and a real JSESSIONID, and drops sessions that turn up without them, so nothing here
+// is rebuilt: the header goes out verbatim and the CSRF token is read out of it.
+function fromCookieHeader(header: string): LinkedInSession {
+  const jsessionId = parseSetCookie(header.split(';'))['JSESSIONID'];
+  if (!jsessionId) {
+    throw new SessionUnavailableError('LI_COOKIE has no JSESSIONID, so no CSRF token can be sent');
+  }
+  return { cookie: header.trim(), csrfToken: csrfTokenFrom(jsessionId) };
 }
 
 // LinkedIn only checks that csrf-token matches the JSESSIONID cookie, so an arbitrary

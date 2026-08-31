@@ -13,6 +13,9 @@ const schema = z.object({
   API_KEY: optional(),
   LI_AT: optional(),
   LI_JSESSIONID: optional(),
+  // A whole Cookie header copied from a signed-in browser. LinkedIn revokes sessions that
+  // arrive with li_at alone, so sending the set it issued is what makes one last.
+  LI_COOKIE: optional(),
   LINKEDIN_EMAIL: optional(),
   LINKEDIN_PASSWORD: optional(),
   VOYAGER_PROFILE_QUERY_ID: optional(),
@@ -50,7 +53,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
 }
 
 export function hasCookieSession(config: Config): boolean {
-  return Boolean(config.LI_AT);
+  return Boolean(config.LI_COOKIE ?? config.LI_AT);
 }
 
 export function hasCredentials(config: Config): boolean {

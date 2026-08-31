@@ -145,7 +145,12 @@ export const ErrorResponseSchema = z
   .openapi('ErrorResponse');
 
 export const ProfileQuerySchema = z.object({
-  url: z.string().optional().openapi({ example: 'https://www.linkedin.com/in/williamhgates' }),
+  // Marked required so the docs page sends it by default. The route still accepts
+  // `username` on its own, which OpenAPI cannot express as a choice between two params.
+  url: z.string().optional().openapi({
+    param: { required: true },
+    example: 'https://www.linkedin.com/in/williamhgates',
+  }),
   username: z.string().optional().openapi({ example: 'williamhgates' }),
   refresh: z.enum(['true', 'false']).optional(),
 });
