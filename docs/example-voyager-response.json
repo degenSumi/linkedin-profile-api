@@ -1,0 +1,118 @@
+{
+  "requestedUrl": "https://www.linkedin.com/in/jeffweiner08",
+  "publicIdentifier": "jeffweiner08",
+  "fetchedAt": "2026-08-31T10:01:48.291Z",
+  "source": "voyager-dash",
+  "partial": false,
+  "degradedFrom": [],
+  "profile": {
+    "firstName": "Jeff",
+    "lastName": "Weiner",
+    "fullName": "Jeff Weiner",
+    "headline": "Founding Partner Next Play Ventures; Former CEO / Executive Chairman at LinkedIn",
+    "summary": "For much of the last three decades, Jeff's focus has been on building purpose-driven companies that create lasting value, helping leaders realize their potential, and aspiring to manage compassionatel...",
+    "industry": "Non-profit Organization Management",
+    "location": {
+      "city": "United States",
+      "country": "US",
+      "full": "United States"
+    },
+    "profilePicture": {
+      "small": "https://media.licdn.com/dms/image/v2/C4D03AQFM3Y2r-OEStw/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1515623805035?e=1789603200&v=beta&t=ZMoPK89RGHtH1Dl5_wqbNOK4__hPAs5ACEtXp1atrNo",
+      "medium": "https://media.licdn.com/dms/image/v2/C4D03AQFM3Y2r-OEStw/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1515623804978?e=1789603200&v=beta&t=zy2VMc_KgohD_rrLynZLhMZOjZVvW00Twgf7ZNaE8RE",
+      "large": "https://media.licdn.com/dms/image/v2/C4D03AQFM3Y2r-OEStw/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1515623804984?e=1789603200&v=beta&t=5CXGZ8of1CggbMPcZiM819zf8ATk7C-Upv-xPzZjtzg",
+      "original": "https://media.licdn.com/dms/image/v2/C4D03AQFM3Y2r-OEStw/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1515623806011?e=1789603200&v=beta&t=4_0KwWADgU6Aa82_cCJJ0IyddLoEzweb1m0buLASvlg"
+    },
+    "backgroundImage": {
+      "original": "https://media.licdn.com/dms/image/v2/D4D16AQGPoiykXRfmyw/profile-displaybackgroundimage-shrink_350_1400/B4DZ28XKpqGQAY-/0/1776981683256?e=1789603200&v=beta&t=vz99ysUQGOzm8W8NfWcxOi-b124sKREpmiE0ZLaIYnA"
+    },
+    "connections": null,
+    "followers": null,
+    "openToWork": false,
+    "experience": [
+      {
+        "title": "Member, Board of Directors",
+        "company": "Intuit",
+        "companyUrl": "https://www.linkedin.com/company/intuit/",
+        "companyLogo": "https://media.licdn.com/dms/image/v2/C560BAQFTpF8uneqScw/company-logo_400_400/company-logo_400_400/0/1661446146222/intuit_logo?e=1789603200&v=beta&t=G9Yyp5IMjT8ymPSzYxlD1VrtChpHUztE1tOZr-upbLk",
+        "employmentType": null,
+        "location": "Mountain View, CA",
+        "startDate": {
+          "month": 4,
+          "year": 2012
+        },
+        "endDate": {
+          "month": 1,
+          "year": 2023
+        },
+        "current": false,
+        "description": "Intuit is a leading provider of innovative business and financial management solutions for small and medium-sized businesses, consumers, accounting professionals and financial institutions."
+      },
+      {
+        "title": "Executive Chairman",
+        "company": "LinkedIn",
+        "companyUrl": "https://www.linkedin.com/company/linkedin/",
+        "companyLogo": "https://media.licdn.com/dms/image/v2/C560BAQHaVYd13rRz3A/company-logo_400_400/company-logo_400_400/0/1638831590218/linkedin_logo?e=1789603200&v=beta&t=W0bviGbW7Xu1Sm6Swx8pWiBzjbiIbXigt8cauMgYs7k",
+        "employmentType": null,
+        "location": null,
+        "startDate": {
+          "month": 7,
+          "year": 2020
+        },
+        "endDate": {
+          "month": 4,
+          "year": 2026
+        },
+        "current": false,
+        "description": "Help LinkedIn realize its vision of creating economic opportunity for every member of the global workforce. Continue to mentor and coach the leadership team, and advise on key strategic initiatives."
+      }
+    ],
+    "education": [
+      {
+        "school": "The Wharton School",
+        "degree": "Bachelor of Science",
+        "fieldOfStudy": "Economics",
+        "startDate": {
+          "month": 9,
+          "year": 1988
+        },
+        "endDate": {
+          "month": 6,
+          "year": 1992
+        },
+        "grade": null,
+        "activities": null,
+        "description": null,
+        "schoolLogo": "https://media.licdn.com/dms/image/v2/C4E0BAQFQu7wZniptpA/company-logo_400_400/company-logo_400_400/0/1677690194092/the_wharton_school_logo?e=1789603200&v=beta&t=9seBb8swFWMK8n6mxuXu6MP_eH1S0oWSB7SXpdPrxP0"
+      }
+    ],
+    "skills": [
+      {
+        "name": "Product Management",
+        "endorsements": null
+      },
+      {
+        "name": "User Experience",
+        "endorsements": null
+      },
+      {
+        "name": "Thought Leadership",
+        "endorsements": null
+      },
+      {
+        "name": "LinkedIn",
+        "endorsements": null
+      },
+      {
+        "name": "Mergers & Acquisitions",
+        "endorsements": null
+      }
+    ],
+    "certifications": [],
+    "languages": [],
+    "projects": [],
+    "volunteer": [],
+    "publications": [],
+    "honors": []
+  }
+}

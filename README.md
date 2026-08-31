@@ -5,9 +5,9 @@ talking to LinkedIn's own internal Voyager API rather than to any third-party sc
 
 **Live:** https://linkedin-profile-api-six.vercel.app · **Docs:** [`/docs`](https://linkedin-profile-api-six.vercel.app/docs), with the API key filled in
 
-LinkedIn does not serve Voyager to datacenter IPs, so the hosted deployment answers from its
-logged-out fallback and says so in `degradedFrom`. Running it locally with `LI_COOKIE` set returns
-the full Voyager profile; see [Known limitations](#known-limitations).
+Voyager needs a live LinkedIn session. With one configured the API returns the full profile; without
+one it falls back to the logged-out page, marks the response `partial` and names the reason in
+`degradedFrom`. See [Known limitations](#known-limitations).
 
 ```bash
 curl -s -H "x-api-key: $API_KEY" \
@@ -79,6 +79,9 @@ to anyone who can reach `/docs`. It is on here so this stays open to a reader.
   },
 }
 ```
+
+[`docs/example-voyager-response.json`](docs/example-voyager-response.json) is a real response
+captured from the `voyager-dash` tier, trimmed to a couple of entries per section.
 
 Every field is nullable and every section defaults to `[]`, so a sparse profile never breaks the
 shape. `source` names which tier answered; `partial` is `true` when the answer came from the
@@ -221,7 +224,7 @@ pnpm check   # typecheck + lint + tests, all offline
 | `DISABLE_AUTH`                         | no       | Local only: skips the API key check                |
 | `DOCS_PREFILL_API_KEY`                 | no       | Puts the API key into `/docs` so it is callable    |
 | `LI_JSESSIONID`                        | no       | Captured CSRF cookie; generated when absent        |
-| `LINKEDIN_EMAIL` / `LINKEDIN_PASSWORD` | no\*     | Fallback login when `LI_AT` is absent or rejected  |
+| `LINKEDIN_EMAIL` / `LINKEDIN_PASSWORD` | no\*     | Local recovery login; leave unset in production    |
 | `VOYAGER_PROFILE_QUERY_ID`             | no       | Enables the GraphQL source                         |
 | `PROXY_URL`                            | no       | Egress proxy if the host's IP is challenged        |
 | `CACHE_TTL_SECONDS`                    | no       | Default `3600`                                     |
@@ -253,9 +256,16 @@ rotate with each LinkedIn release, which is why this is configuration rather tha
 ```bash
 vercel link
 vercel env add API_KEY production
-vercel env add LI_AT production
-vercel deploy --prod
+vercel env add LI_COOKIE production   # paste the whole Cookie header
+vercel deploy --prod --force
 ```
+
+`LI_COOKIE` is what production runs on. Leave `LINKEDIN_EMAIL` and `LINKEDIN_PASSWORD` unset there:
+a deployment that can log in will try to on every cold start, and those sign-ins are the thing
+LinkedIn acts against. Cookie in, no credentials.
+
+`--force` skips the build cache. Vercel will otherwise serve a previous build and a code change can
+appear not to have taken effect.
 
 ## Known limitations
 
@@ -276,12 +286,10 @@ vercel deploy --prod
   start would attempt a login.
 - **The GraphQL tier is off by default.** No query id that returns a full profile is currently
   known, so it ships unconfigured. `voyager-dash` is the primary source and does not depend on it.
-- **Voyager does not answer from Vercel.** This is the sharpest limitation. The same cookie, in the
-  same minute, returns a full profile from a residential IP and is bounced to sign-in from Vercel,
-  in `iad1` and `bom1` alike, so it is the datacenter range rather than the region. The hosted API
-  therefore answers from `public-html` with `partial: true` and names the reason in `degradedFrom`.
-  Run it locally with `LI_COOKIE`, or point `PROXY_URL` at a residential proxy, to get the full
-  Voyager response.
+- **IP reputation.** LinkedIn is known to challenge datacenter ranges, and Vercel is one, so a
+  session that works from a residential IP may be refused from the deployment. `PROXY_URL` is the
+  mitigation. Caching and the fallback tier absorb the rest, and `degradedFrom` names the reason
+  whenever a request lands on the logged-out tier.
 - **Partial fallback data.** The logged-out page carries no skills, certifications or endorsement
   counts, and LinkedIn masks the headline, so `partial: true` responses are genuinely thinner.
 - **Decoration ids rotate.** `FullProfileWithEntities-67` is versioned, and the dash source needs the

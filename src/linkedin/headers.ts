@@ -4,7 +4,23 @@ export interface LinkedInSession {
 }
 
 export const USER_AGENT =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36';
+
+// The web client tags every Voyager call with its build and device. Requests without it are
+// trivially separable from real traffic, so the same fields go out here.
+const CLIENT_VERSION = '1.13.46312';
+const TRACK = JSON.stringify({
+  clientVersion: CLIENT_VERSION,
+  mpVersion: CLIENT_VERSION,
+  osName: 'web',
+  timezoneOffset: 5.5,
+  timezone: 'Asia/Calcutta',
+  deviceFormFactor: 'DESKTOP',
+  mpName: 'voyager-web',
+  displayDensity: 2,
+  displayWidth: 2880,
+  displayHeight: 1800,
+});
 
 // Voyager validates the csrf-token header against the JSESSIONID cookie, quotes stripped.
 export function csrfTokenFrom(jsessionId: string): string {
@@ -40,6 +56,13 @@ export function voyagerHeaders(
     'csrf-token': session.csrfToken,
     'x-restli-protocol-version': '2.0.0',
     'x-li-lang': 'en_US',
+    'x-li-track': TRACK,
+    'sec-ch-ua': '"Chromium";v="149", "Not)A;Brand";v="24"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"macOS"',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-origin',
     cookie: session.cookie,
     referer: 'https://www.linkedin.com/feed/',
     'user-agent': USER_AGENT,
