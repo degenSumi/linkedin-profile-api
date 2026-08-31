@@ -22,7 +22,12 @@ curl -s -H "x-api-key: $API_KEY" \
 
 \* exactly one of `url` or `username`.
 
-Authenticate with `x-api-key: <key>` (an `Authorization: Bearer <key>` header also works).
+Authenticate with `x-api-key: <key>` (an `Authorization: Bearer <key>` header also works). On this
+deployment `/docs` comes with the key filled in, so requests can be sent straight from the page.
+
+The key is never committed. `DOCS_PREFILL_API_KEY=true` tells the server to inject the configured
+`API_KEY` into the docs page at runtime, and it is off by default because it makes that key readable
+to anyone who can reach `/docs`. It is on here so this stays open to a reader.
 
 ```jsonc
 {
@@ -207,6 +212,7 @@ pnpm check   # typecheck + lint + tests, all offline
 | `API_KEY`                              | yes      | Key callers must present                          |
 | `LI_AT`                                | yes\*    | LinkedIn session cookie                           |
 | `DISABLE_AUTH`                         | no       | Local only: skips the API key check               |
+| `DOCS_PREFILL_API_KEY`                 | no       | Puts the API key into `/docs` so it is callable   |
 | `LI_JSESSIONID`                        | no       | Captured CSRF cookie; generated when absent       |
 | `LINKEDIN_EMAIL` / `LINKEDIN_PASSWORD` | no\*     | Fallback login when `LI_AT` is absent or rejected |
 | `VOYAGER_PROFILE_QUERY_ID`             | no       | Enables the GraphQL source                        |

@@ -30,6 +30,12 @@ const schema = z.object({
     .string()
     .optional()
     .transform((value) => value?.trim().toLowerCase() === 'true'),
+  // Puts the API key into the docs page so a reader can call the endpoint from there.
+  // Off by default: it makes the key readable to anyone who can reach /docs.
+  DOCS_PREFILL_API_KEY: z
+    .string()
+    .optional()
+    .transform((value) => value?.trim().toLowerCase() === 'true'),
 });
 
 export type Config = Readonly<z.infer<typeof schema>>;

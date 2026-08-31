@@ -24,7 +24,23 @@ export function createApp(container: Container): OpenAPIHono<AppEnv> {
     info: { title: 'LinkedIn Profile API', version: '1.0.0' },
   });
 
-  app.get('/docs', Scalar({ url: '/openapi.json', pageTitle: 'LinkedIn Profile API' }));
+  const { API_KEY, DOCS_PREFILL_API_KEY } = container.config;
+  const prefill =
+    DOCS_PREFILL_API_KEY && API_KEY
+      ? ({
+          authentication: {
+            preferredSecurityScheme: 'apiKey',
+            securitySchemes: {
+              apiKey: { type: 'apiKey', name: 'x-api-key', in: 'header', value: API_KEY },
+            },
+          },
+        } as const)
+      : {};
+
+  app.get(
+    '/docs',
+    Scalar({ url: '/openapi.json', pageTitle: 'LinkedIn Profile API', ...prefill }),
+  );
   app.get('/', (c) => c.redirect('/docs'));
 
   return app;
