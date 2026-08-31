@@ -45,12 +45,10 @@ export function buildContainer(
     password: config.LINKEDIN_PASSWORD,
   });
 
-  // The dash endpoint is the one that currently answers: the legacy profileView it
-  // replaced now returns 410 Gone. GraphQL reads the same normalized documents but
-  // needs a captured query id, so it sits behind. The public page needs no session
-  // at all, which is why it is last rather than absent.
-  // GraphQL is only wired in when its query id is configured, since an unconfigured source
-  // would fail on every request and make /health advertise something that cannot answer.
+  // Dash is the endpoint that answers: the legacy profileView it replaced returns 410 Gone.
+  // GraphQL reads the same documents but only joins the chain when a query id is configured,
+  // since an unconfigured source would fail every request and make /health advertise a tier
+  // that cannot answer. The public page needs no session, which is why it is last, not absent.
   const sources = [
     new VoyagerDashSource(http, sessions),
     ...(config.VOYAGER_PROFILE_QUERY_ID
@@ -66,7 +64,9 @@ export function buildContainer(
   );
 
   if (config.DISABLE_AUTH) {
-    console.warn('auth_disabled', { detail: 'DISABLE_AUTH is set, so /v1 routes are unauthenticated' });
+    console.warn('auth_disabled', {
+      detail: 'DISABLE_AUTH is set, so /v1 routes are unauthenticated',
+    });
   }
 
   return {

@@ -37,10 +37,7 @@ export function createApp(container: Container): OpenAPIHono<AppEnv> {
         } as const)
       : {};
 
-  app.get(
-    '/docs',
-    Scalar({ url: '/openapi.json', pageTitle: 'LinkedIn Profile API', ...prefill }),
-  );
+  app.get('/docs', Scalar({ url: '/openapi.json', pageTitle: 'LinkedIn Profile API', ...prefill }));
   app.get('/', (c) => c.redirect('/docs'));
 
   return app;

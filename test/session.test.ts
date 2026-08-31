@@ -93,8 +93,8 @@ describe('LinkedInSessions with a full cookie header', () => {
   it('rejects a header with no JSESSIONID to send', async () => {
     const http = new StubHttp({});
 
-    await expect(
-      new LinkedInSessions(http, { cookieHeader: 'li_at=token' }).get(),
-    ).rejects.toThrow('no JSESSIONID');
+    await expect(new LinkedInSessions(http, { cookieHeader: 'li_at=token' }).get()).rejects.toThrow(
+      'no JSESSIONID',
+    );
   });
 });

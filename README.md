@@ -3,7 +3,11 @@
 An HTTPS API that takes a LinkedIn profile URL and returns the profile as structured JSON, by
 talking to LinkedIn's own internal Voyager API rather than to any third-party scraping service.
 
-**Live:** https://linkedin-profile-api-six.vercel.app · **Docs:** [`/docs`](https://linkedin-profile-api-six.vercel.app/docs)
+**Live:** https://linkedin-profile-api-six.vercel.app · **Docs:** [`/docs`](https://linkedin-profile-api-six.vercel.app/docs), with the API key filled in
+
+LinkedIn does not serve Voyager to datacenter IPs, so the hosted deployment answers from its
+logged-out fallback and says so in `degradedFrom`. Running it locally with `LI_COOKIE` set returns
+the full Voyager profile; see [Known limitations](#known-limitations).
 
 ```bash
 curl -s -H "x-api-key: $API_KEY" \
@@ -89,7 +93,10 @@ logs:
   "source": "public-html",
   "partial": true,
   "degradedFrom": [
-    { "source": "voyager-dash", "reason": "LinkedIn redirected the request to sign-in, so the session has expired" },
+    {
+      "source": "voyager-dash",
+      "reason": "LinkedIn redirected the request to sign-in, so the session has expired",
+    },
     { "source": "voyager-graphql", "reason": "Voyager GraphQL returned an empty profile" },
   ],
 }
@@ -152,7 +159,6 @@ The legacy `/voyager/api/identity/profiles/{id}/profileView` endpoint that most 
 recommend now returns **410 Gone**, along with `/identity/profiles/{id}` and its `/skills`
 sub-resource. This API does not use them.
 
-
 A missing profile short-circuits the chain: a 404 is an answer, not a source failure, so later
 tiers are not consulted. If every tier fails, the 502 lists what each one said.
 
@@ -207,21 +213,21 @@ pnpm check   # typecheck + lint + tests, all offline
 
 ### Environment
 
-| Variable                               | Required | Purpose                                           |
-| -------------------------------------- | -------- | ------------------------------------------------- |
-| `API_KEY`                              | yes      | Key callers must present                          |
-| `LI_COOKIE`                            | yes\*    | Whole Cookie header from a signed-in browser      |
+| Variable                               | Required | Purpose                                            |
+| -------------------------------------- | -------- | -------------------------------------------------- |
+| `API_KEY`                              | yes      | Key callers must present                           |
+| `LI_COOKIE`                            | yes\*    | Whole Cookie header from a signed-in browser       |
 | `LI_AT`                                | yes\*    | Session cookie on its own, if `LI_COOKIE` is unset |
-| `DISABLE_AUTH`                         | no       | Local only: skips the API key check               |
-| `DOCS_PREFILL_API_KEY`                 | no       | Puts the API key into `/docs` so it is callable   |
-| `LI_JSESSIONID`                        | no       | Captured CSRF cookie; generated when absent       |
-| `LINKEDIN_EMAIL` / `LINKEDIN_PASSWORD` | no\*     | Fallback login when `LI_AT` is absent or rejected |
-| `VOYAGER_PROFILE_QUERY_ID`             | no       | Enables the GraphQL source                        |
-| `PROXY_URL`                            | no       | Egress proxy if the host's IP is challenged       |
-| `CACHE_TTL_SECONDS`                    | no       | Default `3600`                                    |
-| `PARTIAL_CACHE_TTL_SECONDS`            | no       | Default `60`; lifetime of degraded answers        |
-| `RATE_LIMIT_PER_MINUTE`                | no       | Default `30`                                      |
-| `HTTP_TIMEOUT_MS`                      | no       | Default `15000`                                   |
+| `DISABLE_AUTH`                         | no       | Local only: skips the API key check                |
+| `DOCS_PREFILL_API_KEY`                 | no       | Puts the API key into `/docs` so it is callable    |
+| `LI_JSESSIONID`                        | no       | Captured CSRF cookie; generated when absent        |
+| `LINKEDIN_EMAIL` / `LINKEDIN_PASSWORD` | no\*     | Fallback login when `LI_AT` is absent or rejected  |
+| `VOYAGER_PROFILE_QUERY_ID`             | no       | Enables the GraphQL source                         |
+| `PROXY_URL`                            | no       | Egress proxy if the host's IP is challenged        |
+| `CACHE_TTL_SECONDS`                    | no       | Default `3600`                                     |
+| `PARTIAL_CACHE_TTL_SECONDS`            | no       | Default `60`; lifetime of degraded answers         |
+| `RATE_LIMIT_PER_MINUTE`                | no       | Default `30`                                       |
+| `HTTP_TIMEOUT_MS`                      | no       | Default `15000`                                    |
 
 \* without either the cookie or credentials, only the `public-html` tier can answer.
 
@@ -270,8 +276,12 @@ vercel deploy --prod
   start would attempt a login.
 - **The GraphQL tier is off by default.** No query id that returns a full profile is currently
   known, so it ships unconfigured. `voyager-dash` is the primary source and does not depend on it.
-- **IP reputation.** LinkedIn challenges known datacenter ranges, and Vercel is one. Caching and the
-  fallback tier absorb some of that; `PROXY_URL` is the real mitigation.
+- **Voyager does not answer from Vercel.** This is the sharpest limitation. The same cookie, in the
+  same minute, returns a full profile from a residential IP and is bounced to sign-in from Vercel,
+  in `iad1` and `bom1` alike, so it is the datacenter range rather than the region. The hosted API
+  therefore answers from `public-html` with `partial: true` and names the reason in `degradedFrom`.
+  Run it locally with `LI_COOKIE`, or point `PROXY_URL` at a residential proxy, to get the full
+  Voyager response.
 - **Partial fallback data.** The logged-out page carries no skills, certifications or endorsement
   counts, and LinkedIn masks the headline, so `partial: true` responses are genuinely thinner.
 - **Decoration ids rotate.** `FullProfileWithEntities-67` is versioned, and the dash source needs the

@@ -46,4 +46,3 @@ export class VoyagerDashSource implements ProfileSource {
     };
   }
 }
-

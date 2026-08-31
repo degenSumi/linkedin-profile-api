@@ -46,4 +46,3 @@ export class VoyagerGraphQlSource implements ProfileSource {
 
 // The normalized response flattens every entity into `included`, tagged by $type,
 // which keeps this mapper independent of the exact shape of the registered query.
-

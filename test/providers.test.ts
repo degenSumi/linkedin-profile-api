@@ -142,11 +142,10 @@ describe('CachedSource', () => {
       spy,
       TTL,
     ).fetch(ref);
-    await new CachedSource(
-      new StubProvider('public-html', result('public-html')),
-      spy,
-      TTL,
-    ).fetch(ref, { refresh: true });
+    await new CachedSource(new StubProvider('public-html', result('public-html')), spy, TTL).fetch(
+      ref,
+      { refresh: true },
+    );
 
     expect(ttls).toEqual([TTL.full, TTL.partial]);
   });
