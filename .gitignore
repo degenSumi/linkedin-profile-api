@@ -1,0 +1,13 @@
+node_modules
+.vercel
+.env*
+!.env.example
+dist
+coverage
+*.log
+
+# The challenge brief itself does not belong in a public repo.
+Engineer Hiring Challenge.pdf
+
+# Local architecture notes, not for the repo.
+ARCHITECTURE.md
