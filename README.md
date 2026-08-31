@@ -135,10 +135,9 @@ Three sources sit behind one interface and are tried in order:
    with `decorationId=…FullProfileWithEntities-67`. The decoration controls how much of the graph
    LinkedIn inlines; with it, positions, education and their companies arrive in one call. This is
    the endpoint that currently answers.
-2. **`voyager-graphql`** — `/voyager/api/graphql?variables=(memberIdentity:…)&queryId=…`. It reads
-   the same normalized documents, so it maps through identical code, but it stays **unconfigured by
-   default**: see below for why. Setting `VOYAGER_PROFILE_QUERY_ID` wires it in, and the container
-   leaves it out entirely when that is unset rather than advertising a tier that cannot answer.
+2. **`voyager-graphql`** — `/voyager/api/graphql`. Secondary, and off unless
+   `VOYAGER_PROFILE_QUERY_ID` is set. It reads the same normalized documents through identical
+   mapping code; no query id that returns a full profile is currently known.
 3. **`public-html`** — the logged-out profile page, read through its `application/ld+json` block.
    Works with no session at all and returns less, so responses are flagged `partial`.
 
@@ -146,13 +145,6 @@ The legacy `/voyager/api/identity/profiles/{id}/profileView` endpoint that most 
 recommend now returns **410 Gone**, along with `/identity/profiles/{id}` and its `/skills`
 sub-resource. This API does not use them.
 
-**There is no full-profile GraphQL query to capture.** Recording the network tab while loading a
-profile shows LinkedIn server-rendering the profile into the HTML document; no XHR fetches it. The
-one profile-shaped GraphQL call on the page,
-`voyagerIdentityDashProfiles.b5c27c04968c409fc0ed3546575b9b7a`, sends the **viewer's own** member
-URN and is byte-identical across different profiles — it populates the nav card, not the page. Point
-it at someone else's vanity name and it answers `200` with a one-entity skeleton, which is why the
-GraphQL tier ships unconfigured. `voyager-dash` is the real API here, not a fallback for it.
 
 A missing profile short-circuits the chain: a 404 is an answer, not a source failure, so later
 tiers are not consulted. If every tier fails, the 502 lists what each one said.
@@ -232,11 +224,9 @@ limitations).
 
 ### Getting `VOYAGER_PROFILE_QUERY_ID`
 
-Leave it unset unless LinkedIn starts fetching profiles over GraphQL again. To check, open a profile
-while logged in and filter the DevTools Network tab for `voyager/api/graphql`. A usable id belongs
-to a request whose `variables` carry the **viewed** member's URN and whose response contains that
-person's positions; copy its `queryId`, which looks like `voyagerIdentityDashProfiles.<hash>`. A
-request that sends the same URN on every profile is the viewer's own nav card — not this.
+Optional. Open a profile while logged in, filter the DevTools Network tab for `voyager/api/graphql`,
+and copy the `queryId` from a request whose response carries that person's positions. Registered ids
+rotate with each LinkedIn release, which is why this is configuration rather than code.
 
 ### Deploying
 
@@ -261,10 +251,8 @@ vercel deploy --prod
   the challenge alive. On serverless a cookie it obtains lives only in that warm instance; it cannot
   write itself back to the environment. Prefer a browser-captured `LI_AT`, and do not set
   `LINKEDIN_EMAIL`/`LINKEDIN_PASSWORD` in production, where every cold start would attempt a login.
-- **The GraphQL tier is dormant.** LinkedIn server-renders profile content today, so there is no
-  full-profile query id to configure and the source is left unwired. It is kept because the tier
-  costs one file behind an interface that already exists, and LinkedIn has moved this boundary
-  before. Registered query ids also rotate with each release, so any captured id is configuration.
+- **The GraphQL tier is off by default.** No query id that returns a full profile is currently
+  known, so it ships unconfigured. `voyager-dash` is the primary source and does not depend on it.
 - **IP reputation.** LinkedIn challenges known datacenter ranges, and Vercel is one. Caching and
   the fallback tier absorb some of that; `PROXY_URL` is the real mitigation.
 - **Partial fallback data.** The logged-out page has no skills, certifications or endorsement
