@@ -9,8 +9,12 @@ Voyager needs a live LinkedIn session. With one configured the API returns the f
 one it falls back to the logged-out page, marks the response `partial` and names the reason in
 `degradedFrom`. See [Known limitations](#known-limitations).
 
+**To try it, open [`/docs`](https://linkedin-profile-api-six.vercel.app/docs) and press Send.**
+`/v1/profile` needs an API key, and this deployment publishes its own into the docs page, so nothing
+needs setting up. To use curl instead, copy that key from the Authentication panel on the same page:
+
 ```bash
-curl -s -H "x-api-key: $API_KEY" \
+curl -s -H "x-api-key: <key from /docs>" \
   "https://linkedin-profile-api-six.vercel.app/v1/profile?url=https://www.linkedin.com/in/williamhgates" | jq
 ```
 
